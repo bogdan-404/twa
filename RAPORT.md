@@ -1,4 +1,4 @@
-# Raport laborator TWA/TWAAOS
+# Raport laborator TWA
 
 ## Date generale
 
@@ -39,39 +39,7 @@ Frontend-ul trimite cereri HTTP către endpoint-urile backend-ului. Endpoint-uri
 
 În producție, aplicația React este construită cu Vite, iar fișierele statice rezultate sunt servite de FastAPI din același serviciu Docker. Endpoint-urile API sunt prefixate cu `/api`, pentru a nu intra în conflict cu rutele frontend-ului.
 
-## 5. Structura proiectului
-
-```text
-twa/
-├── backend/
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py
-│   │   ├── database.py
-│   │   ├── auth.py
-│   │   ├── schemas.py
-│   │   └── crud.py
-│   └── requirements.txt
-├── frontend/
-│   ├── index.html
-│   ├── package.json
-│   ├── package-lock.json
-│   ├── vite.config.js
-│   └── src/
-│       ├── main.jsx
-│       ├── App.jsx
-│       ├── api.js
-│       └── styles.css
-├── Dockerfile
-├── .dockerignore
-├── .gitignore
-├── .env.example
-├── render.yaml
-├── README.md
-└── RAPORT.md
-```
-
-## 6. Baza de date SQLite3
+## 5. Baza de date SQLite3
 
 Baza de date este implementată cu SQLite3 și este inițializată automat la pornirea aplicației prin mecanismul lifespan din FastAPI. Conexiunea folosește `sqlite3.Row` pentru acces clar la coloane și activează `PRAGMA foreign_keys = ON` pentru respectarea relațiilor dintre tabele.
 
@@ -79,7 +47,7 @@ Tabelul `users` conține datele utilizatorilor: identificatorul, username-ul, ha
 
 Relația dintre tabele este realizată prin cheia străină `contacts.user_id`, care referă `users.id`. Astfel, fiecare contact aparține unui singur utilizator. Toate interogările pentru contacte filtrează după `user_id`, ceea ce asigură faptul că fiecare utilizator vede și modifică doar contactele proprii.
 
-## 7. Autentificare și securitate
+## 6. Autentificare și securitate
 
 Înregistrarea se face prin trimiterea unui username și a unei parole. Username-ul este normalizat prin eliminarea spațiilor și transformarea în litere mici. Parola nu este salvată niciodată în text clar, ci este hash-uită folosind bcrypt prin biblioteca passlib.
 
@@ -87,7 +55,7 @@ La autentificare, aplicația verifică parola introdusă cu hash-ul salvat în b
 
 Endpoint-urile protejate validează token-ul și identifică utilizatorul curent. Dacă token-ul lipsește, este invalid sau a expirat, backend-ul returnează codul HTTP 401.
 
-## 8. Endpoint-uri API
+## 7. Endpoint-uri API
 
 | Method | Endpoint | Protected | Description |
 | --- | --- | --- | --- |
@@ -101,7 +69,7 @@ Endpoint-urile protejate validează token-ul și identifică utilizatorul curent
 | PUT | `/api/contacts/{contact_id}` | Da | Actualizează un contact existent |
 | DELETE | `/api/contacts/{contact_id}` | Da | Șterge un contact existent |
 
-## 9. Interfața React cu Ant Design
+## 8. Interfața React cu Ant Design
 
 Interfața este construită în React.js și utilizează componente Ant Design pentru un aspect curat și ușor de folosit. Aplicația are un ecran de autentificare unde utilizatorul poate alege între login și register. Erorile și mesajele de succes sunt afișate cu sistemul `message` din Ant Design.
 
@@ -110,6 +78,32 @@ După autentificare, utilizatorul ajunge la ecranul principal cu lista de contac
 Adăugarea și editarea contactelor sunt realizate printr-o fereastră modală Ant Design. Formularul conține câmpurile nume, telefon, email și note. Pentru ștergere este folosit un `Popconfirm`, astfel încât utilizatorul să confirme acțiunea înainte ca datele să fie eliminate.
 
 Componente Ant Design utilizate: `Layout`, `Header`, `Card`, `Form`, `Input`, `Button`, `Table`, `Modal`, `Space`, `Typography`, `message`, `Popconfirm` și `Empty`.
+
+## 9. Flux frontend
+
+### Pasul 1 - Ecran autentificare (login/register)
+
+![Ecran autentificare](img/flow-1-auth.png)
+
+Utilizatorul deschide aplicația și are acces la formularul de autentificare sau înregistrare.
+
+### Pasul 2 - Înregistrare reușită
+
+![Înregistrare reușită](img/flow-2-register-success.png)
+
+După completarea datelor, aplicația confirmă crearea contului, iar utilizatorul poate continua cu autentificarea.
+
+### Pasul 3 - Lista de contacte
+
+![Lista contacte](img/flow-3-contacts-list.png)
+
+După login, utilizatorul este redirecționat în ecranul principal unde poate vizualiza și căuta contactele.
+
+### Pasul 4 - Adăugare contact nou
+
+![Adăugare contact](img/flow-4-add-contact.png)
+
+Prin butonul de adăugare se deschide formularul din modal. Utilizatorul completează datele, salvează, iar contactul apare în listă.
 
 ## 10. Containerizare cu Docker
 
@@ -121,17 +115,9 @@ La rulare, FastAPI pornește cu uvicorn și servește atât API-ul, cât și fro
 
 ## 11. Deployment pe Render.com
 
-Deployment-ul este pregătit pentru Render.com prin fișierul `render.yaml`. Serviciul este configurat ca Web Service cu runtime Docker, plan gratuit și health check pe ruta `/healthz`.
+Aplicația a fost deployată pe Render.com folosind serviciu Docker, iar aplicația rulează într-un singur serviciu care servește atât API-ul FastAPI, cât și frontend-ul React build-uit.
 
-Aplicația este conectată la repository-ul GitHub, iar Render construiește imaginea Docker pe baza Dockerfile-ului din proiect. Variabilele de mediu necesare sunt `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `DATABASE_PATH` și `PYTHONUNBUFFERED`.
-
-Pentru Render, `DATABASE_PATH` este setat la `/tmp/contact_manager.db`, astfel încât aplicația să poată crea baza SQLite în sistemul de fișiere disponibil serviciului.
-
-## 12. Limitări ale versiunii gratuite Render
-
-Aplicația folosește SQLite3 conform cerinței laboratorului. În mediul local, baza de date persistă în fișierul contact_manager.db. În deployment-ul gratuit pe Render, baza SQLite este utilizată pentru demonstrație, însă fișierul local poate fi resetat la redeploy, restart sau spin-down, deoarece sistemul de fișiere al serviciilor gratuite este efemer. De asemenea, serviciul gratuit poate intra în stare de repaus după o perioadă de inactivitate, iar prima accesare ulterioară poate dura mai mult.
-
-## 13. Concluzii
+## 12. Concluzii
 
 În cadrul acestei lucrări a fost realizată o aplicație web completă, cu frontend, backend, bază de date, autentificare și deployment pregătit. Proiectul a permis aprofundarea conceptelor de API REST cu FastAPI, lucrul cu SQLite3, autentificarea cu JWT, securizarea parolelor prin bcrypt, dezvoltarea interfețelor cu React și Ant Design, precum și containerizarea cu Docker.
 
