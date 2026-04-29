@@ -78,11 +78,11 @@ function AuthScreen({ onAuthenticated }) {
 
             <Form form={form} layout="vertical" onFinish={handleSubmit} requiredMark={false}>
               <Form.Item
-                label="Username"
+                label="Nume utilizator"
                 name="username"
                 rules={[
-                  { required: true, message: 'Introduceti username-ul' },
-                  { min: 3, max: 50, message: 'Username-ul trebuie sa aiba 3-50 caractere' }
+                  { required: true, message: 'Introduceti numele de utilizator' },
+                  { min: 3, max: 50, message: 'Numele de utilizator trebuie sa aiba 3-50 caractere' }
                 ]}
               >
                 <Input prefix={<UserOutlined />} placeholder="bogdan" autoComplete="username" />
@@ -100,12 +100,12 @@ function AuthScreen({ onAuthenticated }) {
               </Form.Item>
 
               <Button type="primary" htmlType="submit" block loading={loading}>
-                {isLogin ? 'Login' : 'Register'}
+                {isLogin ? 'Autentificare' : 'Inregistrare'}
               </Button>
             </Form>
 
             <Button type="link" onClick={() => setMode(isLogin ? 'register' : 'login')}>
-              {isLogin ? 'Nu aveti cont? Inregistrare' : 'Aveti deja cont? Login'}
+              {isLogin ? 'Nu aveti cont? Inregistrare' : 'Aveti deja cont? Autentificare'}
             </Button>
           </Space>
         </Card>
@@ -117,6 +117,16 @@ function AuthScreen({ onAuthenticated }) {
 function ContactModal({ open, contact, onCancel, onSave }) {
   const [form] = Form.useForm()
   const [saving, setSaving] = useState(false)
+  const requirePhoneOrEmail = (_, value) => {
+    const phoneValue = form.getFieldValue('phone')
+    const emailValue = form.getFieldValue('email')
+    const hasValue = (currentValue) => typeof currentValue === 'string' && currentValue.trim().length > 0
+
+    if (hasValue(value) || hasValue(phoneValue) || hasValue(emailValue)) {
+      return Promise.resolve()
+    }
+    return Promise.reject(new Error('Completati cel putin Telefon sau Email'))
+  }
 
   useEffect(() => {
     if (open) {
@@ -160,14 +170,37 @@ function ContactModal({ open, contact, onCancel, onSave }) {
         >
           <Input placeholder="Ion Popescu" />
         </Form.Item>
-        <Form.Item label="Telefon" name="phone">
-          <Input placeholder="+373..." />
+        <Form.Item
+          label="Telefon"
+          name="phone"
+          dependencies={['email']}
+          getValueFromEvent={(event) => event.target.value.replace(/\D/g, '')}
+          rules={[
+            { validator: requirePhoneOrEmail }
+          ]}
+        >
+          <Input inputMode="numeric" placeholder="06873..." />
         </Form.Item>
-        <Form.Item label="Email" name="email">
+        <Form.Item
+          label="Email"
+          name="email"
+          dependencies={['phone']}
+          rules={[
+            {
+              validator: (_, value) => {
+                if (!value || value.includes('@')) {
+                  return Promise.resolve()
+                }
+                return Promise.reject(new Error('Email-ul trebuie sa contina @'))
+              }
+            },
+            { validator: requirePhoneOrEmail }
+          ]}
+        >
           <Input placeholder="ion@example.com" />
         </Form.Item>
         <Form.Item label="Note" name="notes">
-          <Input.TextArea rows={4} placeholder="Friend from university" />
+          <Input.TextArea rows={4} placeholder="Prieten de la facultate" />
         </Form.Item>
       </Form>
     </Modal>
@@ -271,7 +304,7 @@ function ContactsScreen({ user, onLogout }) {
       render: (_, contact) => (
         <Space>
           <Button icon={<EditOutlined />} onClick={() => openEditModal(contact)}>
-            View/Edit
+            Vezi/Editeaza
           </Button>
           <Popconfirm
             title="Stergeti contactul?"
@@ -281,7 +314,7 @@ function ContactsScreen({ user, onLogout }) {
             onConfirm={() => handleDelete(contact.id)}
           >
             <Button danger icon={<DeleteOutlined />}>
-              Delete
+              Sterge
             </Button>
           </Popconfirm>
         </Space>
@@ -298,7 +331,7 @@ function ContactsScreen({ user, onLogout }) {
         <Space>
           <Text className="header-user">Utilizator: {user.username}</Text>
           <Button icon={<LogoutOutlined />} onClick={onLogout}>
-            Logout
+            Deconectare
           </Button>
         </Space>
       </Header>
@@ -314,7 +347,7 @@ function ContactsScreen({ user, onLogout }) {
                 className="search-input"
               />
               <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
-                Add Contact
+                Adauga contact
               </Button>
             </Space>
 
