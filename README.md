@@ -57,31 +57,17 @@ Endpoint-urile protejate validează token-ul și identifică utilizatorul curent
 
 ## 7. Endpoint-uri API
 
-```{=latex}
-\begin{tabular}{|p{0.10\textwidth}|p{0.28\textwidth}|p{0.12\textwidth}|p{0.42\textwidth}|}
-\hline
-\textbf{Method} & \textbf{Endpoint} & \textbf{Protected} & \textbf{Description} \\
-\hline
-GET & /healthz & Nu & Verifică dacă aplicația rulează \\
-\hline
-POST & /api/auth/register & Nu & Creează un cont nou \\
-\hline
-POST & /api/auth/login & Nu & Autentifică utilizatorul și returnează token JWT \\
-\hline
-GET & /api/auth/me & Da & Returnează utilizatorul autentificat \\
-\hline
-GET & /api/contacts & Da & Returnează contactele utilizatorului curent \\
-\hline
-GET & /api/contacts/\{contact\_id\} & Da & Returnează un contact dacă aparține utilizatorului curent \\
-\hline
-POST & /api/contacts & Da & Creează un contact nou \\
-\hline
-PUT & /api/contacts/\{contact\_id\} & Da & Actualizează un contact existent \\
-\hline
-DELETE & /api/contacts/\{contact\_id\} & Da & Șterge un contact existent \\
-\hline
-\end{tabular}
-```
+| Method | Endpoint | Protected | Description |
+| --- | --- | --- | --- |
+| GET | `/healthz` | Nu | Verifică dacă aplicația rulează |
+| POST | `/api/auth/register` | Nu | Creează un cont nou |
+| POST | `/api/auth/login` | Nu | Autentifică utilizatorul și returnează token JWT |
+| GET | `/api/auth/me` | Da | Returnează utilizatorul autentificat |
+| GET | `/api/contacts` | Da | Returnează contactele utilizatorului curent |
+| GET | `/api/contacts/{contact_id}` | Da | Returnează un contact dacă aparține utilizatorului curent |
+| POST | `/api/contacts` | Da | Creează un contact nou |
+| PUT | `/api/contacts/{contact_id}` | Da | Actualizează un contact existent |
+| DELETE | `/api/contacts/{contact_id}` | Da | Șterge un contact existent |
 
 ## 8. Interfața React cu Ant Design
 
