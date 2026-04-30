@@ -1,97 +1,142 @@
-# Contact Manager
+# Raport laborator TWA
+
+## Date generale
 
 Student: Zlatovcen Bogdan  
 Profesor: Ovidiu Gherman  
-Repository GitHub: https://github.com/bogdan-404/twa.git
+Tema: Contact Manager
 
-Contact Manager este o aplicație web pentru gestionarea contactelor personale. Utilizatorii își pot crea cont, se pot autentifica, pot adăuga contacte, pot vedea lista de contacte, pot edita detalii și pot șterge contacte. Fiecare utilizator vede doar contactele proprii.
+## 1. Scopul lucrării
 
-## Tehnologii utilizate
+Scopul lucrării a fost realizarea unei aplicații web practice pentru gestionarea contactelor personale, utilizând tehnologii moderne pentru dezvoltare web. Aplicația demonstrează folosirea unui backend FastAPI, a unui frontend React cu Ant Design, a unei baze de date SQLite3, a autentificării prin JWT, precum și containerizarea cu Docker și pregătirea deployment-ului pe Render.com.
 
-- FastAPI pentru backend și API REST.
-- React.js cu Vite pentru frontend.
-- Ant Design pentru componente UI.
-- SQLite3 ca bază de date serverless.
-- JWT pentru autentificare pe bază de token.
-- passlib/bcrypt pentru hash-ul parolelor.
-- Docker pentru containerizare.
-- Render.com pentru deployment.
+Prin această lucrare au fost aplicate concepte importante precum proiectarea unui API REST, validarea datelor, securizarea endpoint-urilor, separarea responsabilităților în cod, gestionarea stării în interfața React și configurarea aplicației prin variabile de mediu.
 
-## Funcționalități principale
+## 2. Descrierea aplicației
 
-- Înregistrare și autentificare cu username și parolă.
-- Parole salvate doar ca hash bcrypt.
-- Token JWT trimis prin `Authorization: Bearer <token>`.
-- Operații CRUD pentru contacte.
-- Separarea datelor pe utilizator autentificat.
-- Interfață React cu Ant Design.
-- Servire frontend React construit direct din FastAPI în producție.
+Contact Manager este o aplicație web în care utilizatorii pot crea un cont, se pot autentifica și pot administra propria listă de contacte. După autentificare, fiecare utilizator poate adăuga contacte noi, poate vizualiza contactele existente, poate edita informațiile unui contact și poate șterge contactele care nu mai sunt necesare.
 
-## Endpoint-uri API
+Datele fiecărui utilizator sunt izolate. Un utilizator autentificat poate accesa doar contactele asociate contului său, iar cererile către endpoint-urile protejate necesită un token JWT valid.
 
-| Method | Endpoint | Protected | Descriere |
-| --- | --- | --- | --- |
-| GET | `/healthz` | Nu | Verifică starea aplicației |
-| POST | `/api/auth/register` | Nu | Creează un cont nou |
-| POST | `/api/auth/login` | Nu | Autentifică utilizatorul și returnează token JWT |
-| GET | `/api/auth/me` | Da | Returnează utilizatorul curent |
-| GET | `/api/contacts` | Da | Returnează contactele utilizatorului curent |
-| GET | `/api/contacts/{contact_id}` | Da | Returnează un contact propriu |
-| POST | `/api/contacts` | Da | Creează un contact nou |
-| PUT | `/api/contacts/{contact_id}` | Da | Actualizează un contact propriu |
-| DELETE | `/api/contacts/{contact_id}` | Da | Șterge un contact propriu |
+## 3. Tehnologii utilizate
 
-## Rulare locală backend
+- FastAPI a fost utilizat pentru backend și pentru expunerea endpoint-urilor REST.
+- React.js a fost utilizat pentru construirea interfeței frontend.
+- Ant Design a fost utilizat pentru componente vizuale precum formulare, tabele, carduri, butoane și ferestre modale.
+- SQLite3 a fost utilizat ca bază de date serverless, accesată prin modulul standard Python `sqlite3`.
+- JWT a fost utilizat pentru autentificare și autorizarea cererilor către endpoint-urile protejate.
+- Docker a fost utilizat pentru containerizarea aplicației și rularea ei într-un mediu reproductibil.
+- Render.com a fost utilizat ca platformă țintă pentru deployment.
+- GitHub a fost utilizat pentru găzduirea codului sursă.
 
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp ../.env.example ../.env
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+## 4. Arhitectura aplicației
+
+Aplicația este structurată în trei componente principale: interfața React, API-ul FastAPI și baza de date SQLite3. Fluxul principal este următorul:
+
+Browser React UI -> FastAPI API -> SQLite3 database
+
+Frontend-ul trimite cereri HTTP către endpoint-urile backend-ului. Endpoint-urile publice permit înregistrarea și autentificarea, iar endpoint-urile pentru contacte sunt protejate. După autentificare, clientul primește un token JWT și îl trimite la cererile următoare în header-ul `Authorization: Bearer <token>`.
+
+În producție, aplicația React este construită cu Vite, iar fișierele statice rezultate sunt servite de FastAPI din același serviciu Docker. Endpoint-urile API sunt prefixate cu `/api`, pentru a nu intra în conflict cu rutele frontend-ului.
+
+## 5. Baza de date SQLite3
+
+Baza de date este implementată cu SQLite3 și este inițializată automat la pornirea aplicației prin mecanismul lifespan din FastAPI. Conexiunea folosește `sqlite3.Row` pentru acces clar la coloane și activează `PRAGMA foreign_keys = ON` pentru respectarea relațiilor dintre tabele.
+
+Tabelul `users` conține datele utilizatorilor: identificatorul, username-ul, hash-ul parolei și data creării contului. Tabelul `contacts` conține contactele: identificatorul, `user_id`, numele, telefonul, email-ul, notele și datele de creare și actualizare.
+
+Relația dintre tabele este realizată prin cheia străină `contacts.user_id`, care referă `users.id`. Astfel, fiecare contact aparține unui singur utilizator. Toate interogările pentru contacte filtrează după `user_id`, ceea ce asigură faptul că fiecare utilizator vede și modifică doar contactele proprii.
+
+## 6. Autentificare și securitate
+
+Înregistrarea se face prin trimiterea unui username și a unei parole. Username-ul este normalizat prin eliminarea spațiilor și transformarea în litere mici. Parola nu este salvată niciodată în text clar, ci este hash-uită folosind bcrypt prin biblioteca passlib.
+
+La autentificare, aplicația verifică parola introdusă cu hash-ul salvat în baza de date. Dacă datele sunt corecte, backend-ul generează un token JWT cu durată limitată. Frontend-ul salvează token-ul în `localStorage` și îl trimite la cererile protejate în formatul `Authorization: Bearer <token>`.
+
+Endpoint-urile protejate validează token-ul și identifică utilizatorul curent. Dacă token-ul lipsește, este invalid sau a expirat, backend-ul returnează codul HTTP 401.
+
+## 7. Endpoint-uri API
+
+```{=latex}
+\begin{tabular}{|p{0.10\textwidth}|p{0.28\textwidth}|p{0.12\textwidth}|p{0.42\textwidth}|}
+\hline
+\textbf{Method} & \textbf{Endpoint} & \textbf{Protected} & \textbf{Description} \\
+\hline
+GET & /healthz & Nu & Verifică dacă aplicația rulează \\
+\hline
+POST & /api/auth/register & Nu & Creează un cont nou \\
+\hline
+POST & /api/auth/login & Nu & Autentifică utilizatorul și returnează token JWT \\
+\hline
+GET & /api/auth/me & Da & Returnează utilizatorul autentificat \\
+\hline
+GET & /api/contacts & Da & Returnează contactele utilizatorului curent \\
+\hline
+GET & /api/contacts/\{contact\_id\} & Da & Returnează un contact dacă aparține utilizatorului curent \\
+\hline
+POST & /api/contacts & Da & Creează un contact nou \\
+\hline
+PUT & /api/contacts/\{contact\_id\} & Da & Actualizează un contact existent \\
+\hline
+DELETE & /api/contacts/\{contact\_id\} & Da & Șterge un contact existent \\
+\hline
+\end{tabular}
 ```
 
-Backend-ul va fi disponibil la `http://localhost:8000`.
+## 8. Interfața React cu Ant Design
 
-## Rulare locală frontend
+Interfața este construită în React.js și utilizează componente Ant Design pentru un aspect curat și ușor de folosit. Aplicația are un ecran de autentificare unde utilizatorul poate alege între login și register. Erorile și mesajele de succes sunt afișate cu sistemul `message` din Ant Design.
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+După autentificare, utilizatorul ajunge la ecranul principal cu lista de contacte. Acesta include un header cu numele aplicației, username-ul utilizatorului curent și butonul de logout. Lista de contacte este afișată într-un tabel și poate fi filtrată local după nume, telefon sau email.
 
-Frontend-ul va fi disponibil la `http://localhost:5173`. Configurația Vite trimite cererile `/api` către backend-ul local.
+Adăugarea și editarea contactelor sunt realizate printr-o fereastră modală Ant Design. Formularul conține câmpurile nume, telefon, email și note. Pentru ștergere este folosit un `Popconfirm`, astfel încât utilizatorul să confirme acțiunea înainte ca datele să fie eliminate.
 
-## Rulare cu Docker
+Componente Ant Design utilizate: `Layout`, `Header`, `Card`, `Form`, `Input`, `Button`, `Table`, `Modal`, `Space`, `Typography`, `message`, `Popconfirm` și `Empty`.
 
-```bash
-docker build -t twa-contact-manager .
-docker run --rm -p 8000:8000 \
-  -e SECRET_KEY=change-me-in-production \
-  -e ALGORITHM=HS256 \
-  -e ACCESS_TOKEN_EXPIRE_MINUTES=60 \
-  -e DATABASE_PATH=contact_manager.db \
-  twa-contact-manager
-```
+## 9. Flux frontend
 
-Aplicația completă va fi disponibilă la `http://localhost:8000`.
+### Pasul 1 - Ecran autentificare (login/register)
 
-## Deployment pe Render.com
+![Ecran autentificare](img/flow-1-auth.png)
 
-1. Încărcați proiectul în repository-ul GitHub: `https://github.com/bogdan-404/twa.git`.
-2. În Render, creați un serviciu nou de tip Web Service din repository.
-3. Alegeți runtime Docker sau folosiți fișierul `render.yaml`.
-4. Verificați variabilele de mediu:
-   - `SECRET_KEY`
-   - `ALGORITHM=HS256`
-   - `ACCESS_TOKEN_EXPIRE_MINUTES=60`
-   - `DATABASE_PATH=/tmp/contact_manager.db`
-   - `PYTHONUNBUFFERED=1`
-5. Health check path: `/healthz`.
-6. Porniți deployment-ul.
+Utilizatorul deschide aplicația și are acces la formularul de autentificare sau înregistrare.
 
-## Observație despre Render Free
+### Pasul 2 - Înregistrare reușită
 
-Aplicația folosește SQLite3 conform cerinței laboratorului. În mediul local, baza de date persistă în fișierul `contact_manager.db`. În deployment-ul gratuit pe Render, baza SQLite este utilizată pentru demonstrație, însă fișierul local poate fi resetat la redeploy, restart sau spin-down, deoarece sistemul de fișiere al serviciilor gratuite este efemer. De asemenea, serviciul gratuit poate intra în stare de repaus după o perioadă de inactivitate, iar prima accesare ulterioară poate dura mai mult.
+![Înregistrare reușită](img/flow-2-register-success.png)
+
+După completarea datelor, aplicația confirmă crearea contului, iar utilizatorul poate continua cu autentificarea.
+
+### Pasul 3 - Lista de contacte
+
+![Lista contacte](img/flow-3-contacts-list.png)
+
+După login, utilizatorul este redirecționat în ecranul principal unde poate vizualiza și căuta contactele.
+
+### Pasul 4 - Adăugare contact nou
+
+![Adăugare contact](img/flow-4-add-contact.png)
+
+Prin butonul de adăugare se deschide formularul din modal. Utilizatorul completează datele, salvează, iar contactul apare în listă.
+
+## 10. Containerizare cu Docker
+
+Docker este folosit pentru a rula aplicația într-un mediu uniform, indiferent de sistemul pe care este executată. Containerizarea simplifică deployment-ul și reduce diferențele dintre mediul local și mediul de producție.
+
+Fișierul Dockerfile este multi-stage. Prima etapă folosește Node.js pentru instalarea dependențelor frontend și construirea aplicației React. A doua etapă folosește Python 3.12 slim, instalează dependențele backend și copiază fișierele statice generate de React în aplicația FastAPI.
+
+La rulare, FastAPI pornește cu uvicorn și servește atât API-ul, cât și frontend-ul construit.
+
+## 11. Deployment pe Render.com
+
+Aplicația a fost deployată pe Render.com folosind serviciu Docker, iar aplicația rulează într-un singur serviciu care servește atât API-ul FastAPI, cât și frontend-ul React build-uit.
+
+Link aplicație deployată: https://twa-b4uo.onrender.com/
+
+![Deployment pe Render](img/render-deploy.png)
+
+## 12. Concluzii
+
+În cadrul acestei lucrări a fost realizată o aplicație web completă, cu frontend, backend, bază de date, autentificare și deployment pregătit. Proiectul a permis aprofundarea conceptelor de API REST cu FastAPI, lucrul cu SQLite3, autentificarea cu JWT, securizarea parolelor prin bcrypt, dezvoltarea interfețelor cu React și Ant Design, precum și containerizarea cu Docker.
+
+Lucrarea demonstrează modul în care o aplicație web simplă, dar completă, poate fi construită și pregătită pentru rulare locală și pentru deployment pe o platformă cloud precum Render.com.
